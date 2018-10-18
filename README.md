@@ -8,12 +8,12 @@
 
 A Parse caching module that works exactly how you would expect it to, with the latest version of Parse SDK. It can be used on cloud code (memory or redis storages) or client Browser code (memory storage only).
 
-```
+####
 Important:
 
 This module was tested using parse-server 2.8.4 and Parse SDK 2.1. There is no warranty using it on versions before these ones.
 
-```
+####
 
 ## Usage ##
 
