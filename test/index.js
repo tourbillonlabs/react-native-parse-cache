@@ -19,7 +19,7 @@ require('should');
 // const Parse = require('parse');
 
 const Parse = require('parse/node');
-const parseCache = require('../src');
+const parseCache = require('../out');
 
 let RecordObject;
 
@@ -27,8 +27,8 @@ describe('parse-cache', function() {
   this.timeout(10000);
 
   before((done) => {
-    parseCache(Parse, 'MyAppName', { engine: 'redis' });
-    // parseCache(Parse);
+    // parseCache(Parse, 'MyAppName', { engine: 'redis' });
+    parseCache(Parse, 'MyAppName');
 
     Parse.initialize('3d4CUO16zzTbQ7r2yEV37jKos6upWujuXRpeLflD', 'Uv8uRCZaSfSZ0UhyBsuN6SVxq46NIUnNdXLMMbfI', 'FufEbWLknVnyAzngXSBwv3y2OBusE05M0ZFlhdMb');
     Parse.serverURL = 'https://parseapi.back4app.com';
