@@ -6,12 +6,13 @@
 
 ## About ##
 
-A Parse caching module that works exactly how you would expect it to, with the latest version of Parse SDK. It can be used on cloud code or on client Browser code.
+A Parse caching module that works exactly how you would expect it to, with the latest version of Parse SDK. It can be used on cloud code (memory or redis storages) or client Browser code (memory storage only).
 
 ```
 Important:
 
-If you are using Mongoose 4.x or below, you need to use version 4.1 of this library.
+This module was tested using parse-server 2.8.4 and Parse SDK 2.1. There is no warranty using it on versions before these ones.
+
 ```
 
 ## Usage ##
