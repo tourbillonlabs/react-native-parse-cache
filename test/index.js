@@ -1,77 +1,83 @@
 'use strict';
 
+/* eslint-env node, mocha */
+/* global should */
+
 require('should');
 
-const mongoose = require('mongoose');
-const cachegoose = require('../out');
-const Schema = mongoose.Schema;
+// uncomment to emulate browser
+// global.XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
+//
+// global.localStorage = {
+//   setItem: (k, v) => {
+//     global.localStorage[k] = v;
+//   },
+//   getItem: (k) => {
+//     return global.localStorage[k];
+//   }
+// };
+// const Parse = require('parse');
 
-let RecordSchema;
-let Record;
-let db;
+const Parse = require('parse/node');
+const parseCache = require('../src');
 
-describe('cachegoose', () => {
+let RecordObject;
+
+describe('parse-cache', function() {
+  this.timeout(10000);
+
   before((done) => {
-    cachegoose(mongoose);
+    parseCache(Parse, 'MyAppName', { engine: 'redis' });
+    // parseCache(Parse);
 
-    mongoose.connect('mongodb://127.0.0.1/mongoose-cachegoose-testing');
-    db = mongoose.connection;
+    Parse.initialize('3d4CUO16zzTbQ7r2yEV37jKos6upWujuXRpeLflD', 'Uv8uRCZaSfSZ0UhyBsuN6SVxq46NIUnNdXLMMbfI', 'FufEbWLknVnyAzngXSBwv3y2OBusE05M0ZFlhdMb');
+    Parse.serverURL = 'https://parseapi.back4app.com';
 
-    db.on('error', done);
-    db.on('open', done);
+    RecordObject = Parse.Object.extend('Record');
 
-    RecordSchema = new Schema({
-      num: Number,
-      str: String,
-      date: {
-        type: Date,
-        default: Date.now
-      }
-    });
-
-    Record = mongoose.model('Record', RecordSchema);
+    done();
   });
+
+  after(parseCache.close);
 
   beforeEach(() => {
     return generate(10);
   });
 
   afterEach((done) => {
-    Record.remove(() => {
-      cachegoose.clearCache(null, done);
-    });
-  });
-
-  it('should throw an error if the mongoose version is less than 3.7', () => {
-    (() => cachegoose({ version: '3.6' })).should.throw();
-  });
-
-  it('should not an error if the mongoose version is greater than 3.7', () => {
-    (() => cachegoose({ version: '3.10' })).should.not.throw();
+    const Record = new Parse.Query(RecordObject);
+    Record.find().then((records) => {
+      return Parse.Object.destroyAll(records).then(() => {
+        const promise = parseCache.clearCache(null);
+        promise.then(() => {
+          done();
+        }).catch(done);
+      }).catch(done);
+    }).catch(done);
   });
 
   it('should have cache method after initialization', () => {
-    Record.find({}).cache.should.be.a.Function;
+    const Record = new Parse.Query(RecordObject);
+    Record.cache.should.be.a.Function;
   });
 
-  it('should cache a simple query that uses callbacks', (done) => {
-    getAll(60, (err, res) => {
-      if (err) return done(err);
-
+  it('should cache a simple query that uses promises with then', (done) => {
+    getAll(60).then((res) => {
       res.length.should.equal(10);
 
       generate(10).then(() => {
-        getAll(60, (err, res) => {
-          if (err) return done(err);
+        getAll(60).then((res) => {
           res.length.should.equal(10);
+          res.map(obj => obj.fromCache.should.equal(true));
           done();
-        });
+        }).catch(done);
       });
-    });
+    }).catch(done);
   });
 
   it('should cache a simple query that uses promises', async () => {
     const res = await getAll(60);
+    res.map(obj => should.not.exist(obj.fromCache));
     res.length.should.equal(10);
 
     await generate(10);
@@ -81,46 +87,33 @@ describe('cachegoose', () => {
 
   it('should not cache the same query w/out a ttl defined', async () => {
     const res = await getAll(60);
+    res.map(obj => should.not.exist(obj.fromCache));
     res.length.should.equal(10);
 
     await generate(10);
 
     const nonCachedResponse = await getAllNoCache();
+    nonCachedResponse.map(obj => should.not.exist(obj.fromCache));
     nonCachedResponse.length.should.equal(20);
   });
 
-  it('should return a Mongoose model from cached and non-cached results', (done) => {
-    getAll(60, (err, res) => {
-      if (err) return done(err);
-
+  it('should return a Parse model from cached and non-cached results', (done) => {
+    getAll(60).then((res) => {
+      res.map(obj => should.not.exist(obj.fromCache));
       const first = res[0];
 
-      getAll(60, (err, res2) => {
-        if (err) return done(err);
-
+      getAll(60).then((res2) => {
+        res2.map(obj => obj.fromCache.should.equal(true));
         const cachedFirst = res2[0];
-        first.constructor.name.should.equal('model');
-        cachedFirst.constructor.name.should.equal('model');
+        first.constructor.name.should.equal('ParseObjectSubclass');
+        cachedFirst.constructor.name.should.equal('ParseObjectSubclass');
 
         res[0].isNew.should.be.false;
         res2[0].isNew.should.be.false;
 
         done();
-      });
-    });
-  });
-
-  it('should return lean models from cached and non-cached results', async () => {
-    const lean = await getAllLean(10);
-    lean.length.should.equal(10);
-
-    await generate(10);
-
-    const cachedLean = await getAllLean(10);
-    cachedLean.length.should.equal(10);
-
-    lean[0].constructor.name.should.not.equal('model');
-    cachedLean[0].constructor.name.should.not.equal('model');
+      }).catch(done);
+    }).catch(done);
   });
 
   it('should cache a query that returns no results', async () => {
@@ -133,17 +126,53 @@ describe('cachegoose', () => {
     cachedEmpty.length.should.equal(0);
   });
 
-  it('should distinguish between lean and non lean for the same conditions', async () => {
-    const res = await getAll(60);
+  it('should correctly cache queries using select', async () => {
+    const res = await getAllSelect(60, 'str');
+    res.map(obj => should.not.exist(obj.fromCache));
     res.length.should.equal(10);
 
     await generate(10);
 
-    const cachedRes = await getAll(60);
+    const cachedRes = await getAllSelect(60, 'str');
+    cachedRes.map(obj => obj.fromCache.should.equal(true));
     cachedRes.length.should.equal(10);
 
-    const nonCachedLean = await getAllLean(60);
-    nonCachedLean[0].constructor.name.should.not.equal('model');
+    const nonCached = await getAllSelect(60, 'num');
+    nonCached.map(obj => should.not.exist(obj.fromCache));
+    nonCached.length.should.equal(20);
+
+    const nonCached2 = await getAllSelect(60, 'num', 'str');
+    nonCached2.map(obj => should.not.exist(obj.fromCache));
+    nonCached2.length.should.equal(20);
+
+    const cached2 = await getAllSelect(60, 'num', 'str');
+    cached2.map(obj => obj.fromCache.should.equal(true));
+    cached2.length.should.equal(20);
+  });
+
+  it('should correctly cache queries using distinct', async () => {
+    const res = await getAllDistinct(60, 'str');
+    res.length.should.equal(10);
+
+    const nonCached = await getAllDistinct(60, 'seqNum');
+    nonCached.length.should.equal(10);
+
+    await generate(10);
+
+    const cachedRes = await getAllDistinct(60, 'str');
+    cachedRes.length.should.equal(10);
+
+    const cachedRes2 = await getAllDistinct(60, 'seqNum');
+    cachedRes2.length.should.equal(10);
+
+    const nonCached2 = await getAllDistinct(60, 'num');
+    nonCached2.length.should.equal(10);
+
+    const cachedRes3 = await getAllDistinct(60, 'num');
+    cachedRes3.length.should.equal(10);
+
+    const nonCached3 = await getAllDistinctNonCached('seqNum');
+    nonCached3.length.should.equal(20);
   });
 
   it('should correctly cache queries using skip', async () => {
@@ -153,9 +182,11 @@ describe('cachegoose', () => {
     await generate(10);
 
     const cachedRes = await getWithSkip(1, 60);
+    cachedRes.map(obj => obj.fromCache.should.equal(true));
     cachedRes.length.should.equal(9);
 
     const nonCached = await getWithSkip(2, 60);
+    nonCached.map(obj => should.not.exist(obj.fromCache));
     nonCached.length.should.equal(18);
   });
 
@@ -163,14 +194,17 @@ describe('cachegoose', () => {
     const res = await getWithLimit(5, 60);
     res.length.should.equal(5);
 
-    await Record.remove();
+    const Record = new Parse.Query(RecordObject);
+    await Record.find().then(Parse.Object.destroyAll);
 
     const cached = await getWithLimit(5, 60);
+    cached.map(obj => obj.fromCache.should.equal(true));
     cached.length.should.equal(5);
 
     await generate(10);
 
     const nonCached = await getWithLimit(4, 60);
+    nonCached.map(obj => should.not.exist(obj.fromCache));
     nonCached.length.should.equal(4);
   });
 
@@ -188,7 +222,8 @@ describe('cachegoose', () => {
     const one = await getOne(60);
     Boolean(one).should.be.true;
 
-    await Record.remove();
+    const Record = new Parse.Query(RecordObject);
+    await Record.find().then(Parse.Object.destroyAll);
 
     const cachedOne = await getOne(60);
     Boolean(cachedOne).should.be.true;
@@ -196,81 +231,87 @@ describe('cachegoose', () => {
 
   it('should cache a regex condition properly', async () => {
     const res = await getAllWithRegex(60);
+    res.map(obj => should.not.exist(obj.fromCache));
     res.length.should.equal(10);
 
     await generate(10);
 
     const cached = await getAllWithRegex(60);
     cached.length.should.equal(10);
+    cached.map(obj => obj.fromCache.should.equal(true));
 
     const nonCached = await getNoneWithRegex(60);
+    nonCached.map(obj => should.not.exist(obj.fromCache));
     nonCached.length.should.equal(0);
   });
 
   it('should cache a query rerun many times', async () => {
     const res = await getAll(60);
+    res.map(obj => should.not.exist(obj.fromCache));
     res.length.should.equal(10);
 
     await generate(10);
 
-    await Promise.all(new Array(20).join('.').split('').map(() => getAll(60)));
+    await Promise.all(new Array(20).join('.').split('').map(() => getAll(60).then((cached) => {
+      cached.length.should.equal(10);
+      cached.map(obj => obj.fromCache.should.equal(true));
+    })));
 
     const cached = await getAll(60);
+    cached.map(obj => obj.fromCache.should.equal(true));
     cached.length.should.equal(10);
   });
 
   it('should expire the cache', (done) => {
-    getAll(1, () => {
+    getAll(1).then(() => {
       setTimeout(() => {
-        getAll(1, (err, res) => {
-          if (err) return done(err);
-
-          Boolean(res._fromCache).should.be.false;
+        getAll(1).then((res) => {
+          Boolean(res[0].fromCache).should.be.false;
           done();
-        });
+        }).catch(done);
       }, 1200);
-    });
+    }).catch(done);
   });
 
-  it('should cache aggregate queries that use callbacks', (done) => {
-    aggregate(60, (err, res) => {
-      if (err) return done(err);
-
-      res[0].total.should.equal(45);
-
-      generate(10).then(() => {
-        aggregate(60, (err, cached) => {
-          if (err) return done(err);
-
-          cached[0].total.should.equal(45);
-          done();
-        });
-      });
-    });
-  });
-
-  it('should cache aggregate queries that use Promises', async () => {
-    const [res] = await aggregate(60);
-    res.total.should.equal(45);
-
-    await generate(10);
-
-    const [cached] = await aggregate(60);
-    cached.total.should.equal(45);
-  });
+  // it('should cache aggregate queries that use callbacks', (done) => {
+  //   aggregate(60).then((res) => {
+  //
+  //     res[0].total.should.equal(45);
+  //
+  //     generate(10).then(() => {
+  //       aggregate(60).then((cached) => {
+  //         cached[0].total.should.equal(45);
+  //         done();
+  //       }).catch(done);
+  //     }).catch(done);
+  //   }).catch(done);
+  // });
+  //
+  // it('should cache aggregate queries that use Promises', async () => {
+  //   const [res] = await aggregate(60);
+  //   res.total.should.equal(45);
+  //
+  //   await generate(10);
+  //
+  //   const [cached] = await aggregate(60);
+  //   cached.total.should.equal(45);
+  // });
 
   it('should clear a custom cache key', async () => {
     const res = await getAllCustomKey(60, 'custom-key');
+    res.map(obj => should.not.exist(obj.fromCache));
     res.length.should.equal(10);
 
     await generate(10);
 
     const cached = await getAllCustomKey(60, 'custom-key');
+    cached.map(obj => obj.fromCache.should.equal(true));
     cached.length.should.equal(10);
 
-    cachegoose.clearCache('custom-key');
+    await parseCache.clearCache('custom-key');
 
     const notCached = await getAllCustomKey(60, 'custom-key');
+    notCached.map(obj => should.not.exist(obj.fromCache));
     notCached.length.should.equal(20);
   });
 
@@ -285,7 +326,8 @@ describe('cachegoose', () => {
   });
 
   it('should cache a count query with zero results', async () => {
-    await Record.remove();
+    const Record = new Parse.Query(RecordObject);
+    await Record.find().then(Parse.Object.destroyAll);
 
     const res = await count(60);
     res.should.equal(0);
@@ -295,152 +337,145 @@ describe('cachegoose', () => {
 
     cached.should.equal(0);
   });
-  it('should cache a countDocuments query', async () => {
-    const res = await countDocuments(60);
-    res.should.equal(10);
-
-    await generate(10);
-
-    const cached = await countDocuments(60);
-    cached.should.equal(10);
-  });
-
-  it('should cache a countDocuments query with zero results', async () => {
-    await Record.remove();
-
-    const res = await countDocuments(60);
-    res.should.equal(0);
-
-    await generate(2);
-    const cached = await countDocuments(60);
-
-    cached.should.equal(0);
-  });
-  it('should cache a estimatedDocumentCount query', async () => {
-    const res = await estimatedDocumentCount(60);
-    res.should.equal(10);
-
-    await generate(10);
-
-    const cached = await estimatedDocumentCount(60);
-    cached.should.equal(10);
-  });
-
-  it('should cache a estimatedDocumentCount query with zero results', async () => {
-    await Record.remove();
-
-    const res = await estimatedDocumentCount(60);
-    res.should.equal(0);
-
-    await generate(2);
-    const cached = await estimatedDocumentCount(60);
-
-    cached.should.equal(0);
-  });
 
   it('should correctly cache a query with a sort order', async () => {
-    const res = await getAllSorted({ num: 1 });
+    const res = await getAllSorted('num');
+    res.map(obj => should.not.exist(obj.fromCache));
     res.length.should.equal(10);
 
     await generate(10);
 
-    const cached = await getAllSorted({ num: 1 });
+    const cached = await getAllSorted('num');
+    cached.map(obj => obj.fromCache.should.equal(true));
     cached.length.should.equal(10);
 
-    const diffSort = await getAllSorted({ num: -1 });
+    const diffSort = await getAllSorted('num', 'desc');
+    diffSort.map(obj => should.not.exist(obj.fromCache));
     diffSort.length.should.equal(20);
   });
 });
 
-function getAll(ttl, cb) {
-  return Record.find({}).cache(ttl).exec(cb);
+function getAll(ttl) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.cache(ttl).find();
 }
 
-function getAllCustomKey(ttl, key, cb) {
-  return Record.find({}).cache(ttl, key).exec(cb);
+function getAllCustomKey(ttl, key) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.cache(ttl, key).find();
 }
 
-function getAllNoCache(cb) {
-  return Record.find({}).exec(cb);
+function getAllSelect(ttl, ...select) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.cache(ttl).select(select).find();
 }
 
-function getAllLean(ttl, cb) {
-  return Record.find({}).lean().cache(ttl).exec(cb);
+function getAllDistinct(ttl, distinct) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.cache(ttl).distinct(distinct);
 }
 
-function getOne(ttl, cb) {
-  return Record.findOne({ num: { $gt: 2 } }).cache(ttl).exec(cb);
+function getAllDistinctNonCached(distinct) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.distinct(distinct);
 }
 
-function getWithSkip(skip, ttl, cb) {
-  return Record.find({}).skip(skip).cache(ttl).exec(cb);
+function getAllNoCache() {
+  const Record = new Parse.Query(RecordObject);
+  return Record.find();
 }
 
-function getWithLimit(limit, ttl, cb) {
-  return Record.find({}).limit(limit).cache(ttl).exec(cb);
+function getOne(ttl) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.cache(ttl).greaterThan('num', 2).first();
 }
 
-function getNone(ttl, cb) {
-  return Record.find({ notFound: true }).cache(ttl).exec(cb);
+function getWithSkip(skip, ttl) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.skip(skip).cache(ttl).find();
 }
 
-function getAllWithRegex(ttl, cb) {
-  return Record.find({ str: { $regex: /\d/ } }).cache(ttl).exec(cb);
+function getWithLimit(limit, ttl) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.limit(limit).cache(ttl).find();
 }
 
-function getNoneWithRegex(ttl, cb) {
-  return Record.find({ str: { $regex: /\d\d/ } }).cache(ttl).exec(cb);
+function getNone(ttl) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.cache(ttl).equalTo('notFound', true).find();
 }
 
-function getWithUnorderedQuery(ttl, cb) {
+function getAllWithRegex(ttl) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.cache(ttl).matches('str', /\d/).find();
+}
+
+function getNoneWithRegex(ttl) {
+  const Record = new Parse.Query(RecordObject);
+  return Record.cache(ttl).matches('str', /\d\d/).find();
+}
+
+function getWithUnorderedQuery(ttl) {
+  const Record = new Parse.Query(RecordObject);
   getWithUnorderedQuery.flag = !getWithUnorderedQuery.flag;
   if (getWithUnorderedQuery.flag) {
-    return Record.find({ num: { $exists: true }, str: { $exists: true } }).cache(ttl).exec(cb);
+    return Record.cache(ttl).exists('num').exists('str').find();
   } else {
-    return Record.find({ str: { $exists: true }, num: { $exists: true } }).cache(ttl).exec(cb);
+    return Record.cache(ttl).exists('str').exists('num').find();
   }
 }
 
-function getAllSorted(sortObj) {
-  return Record.find({}).sort(sortObj).cache(60).exec();
+function getAllSorted(sortObj, dir = 'asc') {
+  const Record = new Parse.Query(RecordObject);
+  const query = dir === 'asc' ? Record.ascending(sortObj) : Record.descending(sortObj);
+  return query.cache(60).find();
 }
 
-function count(ttl, cb) {
-  return Record.find({})
+function count(ttl) {
+  const Record = new Parse.Query(RecordObject);
+  return Record
     .cache(ttl)
-    .count()
-    .exec(cb);
-}
-function countDocuments(ttl, cb) {
-  return Record.find({})
-    .cache(ttl)
-    .countDocuments()
-    .exec(cb);
-}
-function estimatedDocumentCount(ttl, cb) {
-  return Record.find({})
-    .cache(ttl)
-    .estimatedDocumentCount()
-    .exec(cb);
+    .count();
 }
 
-function aggregate(ttl, cb) {
-  return Record.aggregate()
-    .group({ _id: null, total: { $sum: '$num' } })
-    .cache(ttl)
-    .exec(cb);
-}
+// function countDocuments(ttl) {
+//   const Record = new Parse.Query(RecordObject);
+//   return Record.find({})
+//     .cache(ttl)
+//     .countDocuments();
+// }
+//
+// function estimatedDocumentCount(ttl) {
+//   const Record = new Parse.Query(RecordObject);
+//   return Record.find({})
+//     .cache(ttl)
+//     .estimatedDocumentCount();
+// }
+//
+// function aggregate(ttl) {
+//   const Record = new Parse.Query(RecordObject);
+//   const pipeline = [{
+//     group: { _id: null, total: { $sum: '$num' } }
+//   }];
+//   return Record.cache(ttl).aggregate(pipeline);
+// }
 
-function generate(amount) {
+let recordsCount = 0;
+
+const generate = (amount) => {
   const records = [];
   let count = 0;
   while (count < amount) {
     records.push({
       num: count,
-      str: count.toString()
+      str: count.toString(),
+      seqNum: recordsCount,
+      seqStr: recordsCount.toString()
     });
+    recordsCount++;
     count++;
   }
 
-  return Record.create(records);
-}
+  return Parse.Object.saveAll(records.map(r => new RecordObject(r)));
+};
+
