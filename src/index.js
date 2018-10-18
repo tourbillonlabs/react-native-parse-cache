@@ -1,25 +1,24 @@
 'use strict';
 
-const compareVersions = require('compare-versions');
-
 let hasRun = false;
 let cache;
 
-module.exports = function init(mongoose, cacheOptions = {}) {
-  if (compareVersions(mongoose.version, '3.7') === -1) throw new Error('Cachegoose is only compatible with mongoose 3.7+');
+module.exports = function init(Parse, cacheName, cacheOptions = {}) {
   if (hasRun) return;
   hasRun = true;
 
-  init._cache = cache = require('./cache')(cacheOptions);
+  init._cache = cache = require('./cache')(cacheName, cacheOptions);
 
-  require('./extend-query')(mongoose, cache);
-  require('./extend-aggregate')(mongoose, cache);
+  require('./extend-query')(Parse, cache);
 };
 
-module.exports.clearCache = function(customKey, cb = () => { }) {
+module.exports.clearCache = function(customKey, cb) {
   if (!customKey) {
-    cache.clear(cb);
-    return;
+    return cache.clear(cb);
   }
-  cache.del(customKey, cb);
+  return cache.del(customKey, cb);
+};
+
+module.exports.close = function(cb) {
+  return cache.close(cb);
 };

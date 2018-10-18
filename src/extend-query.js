@@ -2,61 +2,61 @@
 
 const generateKey = require('./generate-key');
 
-module.exports = function(mongoose, cache) {
-  const exec = mongoose.Query.prototype.exec;
+module.exports = function(Parse, cache) {
+  const originalOperations = {
+    find: Parse.Query.prototype.find,
+    first: Parse.Query.prototype.first,
+    count: Parse.Query.prototype.count,
+    countDocuments: Parse.Query.prototype.countDocuments,
+    estimatedDocumentCount: Parse.Query.prototype.estimatedDocumentCount,
+    aggregate: Parse.Query.prototype.aggregate,
+    each: Parse.Query.prototype.each,
+    get: Parse.Query.prototype.get,
+    distinct: Parse.Query.prototype.distinct,
+  };
 
-  mongoose.Query.prototype.exec = function(op, callback = function() { }) {
-    if (!this.hasOwnProperty('_ttl')) return exec.apply(this, arguments);
+  Object.keys(originalOperations).forEach((operation) => {
+    Parse.Query.prototype[operation] = function() {
+      if (!this.hasOwnProperty('_ttl')) return originalOperations[operation].apply(this, arguments);
 
-    if (typeof op === 'function') {
-      callback = op;
-      op = null;
-    } else if (typeof op === 'string') {
-      this.op = op;
-    }
+      this.args = arguments;
+      this.operation = operation;
 
-    const key = this._key || this.getCacheKey();
-    const ttl = this._ttl;
-    const isCount = ['count', 'countDocuments', 'estimatedDocumentCount'].includes(this.op);
-    const isLean = this._mongooseOptions.lean;
-    const model = this.model.modelName;
+      const key = this._key || this.getCacheKey();
+      const ttl = this._ttl;
+      const isNotParseObjects = ['distinct', 'count', 'countDocuments', 'estimatedDocumentCount'].includes(operation);
+      const model = this.className;
 
-    return new Promise((resolve, reject) => {
-      cache.get(key, (err, cachedResults) => { //eslint-disable-line handle-callback-err
-        if (cachedResults != null) {
-          if (isCount) {
-            callback(null, cachedResults);
+      return new Promise((resolve, reject) => {
+        cache.get(key, (err, cachedResults) => { //eslint-disable-line handle-callback-err
+          if (cachedResults != null) {
+            if (isNotParseObjects) {
+              return resolve(cachedResults);
+            }
+            cachedResults = Array.isArray(cachedResults) ?
+              cachedResults.map(inflateModel(Parse.Object.extend(model))) :
+              inflateModel(Parse.Object.extend(model))(cachedResults);
+
+
             return resolve(cachedResults);
           }
 
-          if (!isLean) {
-            const constructor = mongoose.model(model);
-            cachedResults = Array.isArray(cachedResults) ?
-              cachedResults.map(inflateModel(constructor)) :
-              inflateModel(constructor)(cachedResults);
-          }
-
-          callback(null, cachedResults);
-          return resolve(cachedResults);
-        }
-
-        exec
-          .call(this)
-          .then((results) => {
-            cache.set(key, results, ttl, () => {
-              callback(null, results);
-              return resolve(results);
+          originalOperations[operation]
+            .apply(this, arguments)
+            .then((results) => {
+              cache.set(key, results, ttl, () => {
+                return resolve(results);
+              });
+            })
+            .catch((err) => {
+              reject(err);
             });
-          })
-          .catch((err) => {
-            callback(err);
-            reject(err);
-          });
+        });
       });
-    });
-  };
+    };
+  });
 
-  mongoose.Query.prototype.cache = function(ttl = 60, customKey = '') {
+  Parse.Query.prototype.cache = function(ttl = 60, customKey = '') {
     if (typeof ttl === 'string') {
       customKey = ttl;
       ttl = 60;
@@ -67,18 +67,17 @@ module.exports = function(mongoose, cache) {
     return this;
   };
 
-  mongoose.Query.prototype.getCacheKey = function() {
+  Parse.Query.prototype.getCacheKey = function() {
     const key = {
-      model: this.model.modelName,
-      op: this.op,
-      skip: this.options.skip,
-      limit: this.options.limit,
-      sort: this.options.sort,
-      _options: this._mongooseOptions,
-      _conditions: this._conditions,
-      _fields: this._fields,
-      _path: this._path,
-      _distinct: this._distinct
+      operation: this.operation,
+      model: this.className,
+      args: this.args,
+      skip: this._skip,
+      limit: this._limit,
+      sort: this._order,
+      select: this._select,
+      extraOptions: this._extraOptions,
+      where: this._where
     };
 
     return generateKey(key);
@@ -87,13 +86,9 @@ module.exports = function(mongoose, cache) {
 
 function inflateModel(constructor) {
   return (data) => {
-    if (constructor.inflate) {
-      return constructor.inflate(data);
-    } else {
-      const model = constructor(data);
-      model.$__reset();
-      model.isNew = false;
-      return model;
-    }
+    const obj = new constructor();
+    obj.set(data);
+    obj.fromCache = true;
+    return obj;
   };
 }
