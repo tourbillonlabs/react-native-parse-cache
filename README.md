@@ -15,14 +15,17 @@ A Parse caching module that works exactly how you would expect it to, with the l
 ## Usage ##
 
 ```javascript
-var Parse = require('parse/node'); // or require('parse') if you are on a Browser
-var parseCache = require('parse-cache');
+const Parse = require('parse/node'); // or require('parse') if you are on a Browser
+const parseCache = require('parse-cache');
 
 parseCache(Parse, 'MyUniqueAppNameOrKey', {
   engine: 'redis',    /* If you don't specify the redis engine,      */
   port: 6379,         /* the query results will be cached in memory (on browser use memory storage). */
   host: 'localhost'
 });
+
+const RecordObject = Parse.Object.extend('Record');
+const Record = new Parse.Query(RecordObject);
 
 Record
   .cache(30) // The number of seconds to cache the query.  Defaults to 60 seconds.
@@ -50,7 +53,7 @@ If you want to clear the cache for a specific query, you must specify the cache 
 ```js
 function getChildrenByParentId(parentId, cb) {
   Children
-    .cache(0, `${parentId}_children`)
+    .cache(30, `${parentId}_children`)
     .find({ parentId });
 }
 
