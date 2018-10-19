@@ -13,19 +13,23 @@
     "sha1": "^1.1.1"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "babelify": "^10.0.0",
     "eslint": "^4.16.0",
     "eslint-plugin-mocha": "^4.11.0",
     "mocha": "^5.2.0",
+    "parse": "^2.1.0",
     "should": "^13.2.1",
-    "xmlhttprequest": "^1.8.0",
-    "parse": "^2.1.0"
+    "xmlhttprequest": "^1.8.0"
   },
   "scripts": {
     "test": "npm run build && mocha --exit",
     "lint": "eslint .",
     "build": "babel src --out-dir out",
-    "prepublish": "npm run lint && npm run build"
+    "browselify": "browserify index.js -o dist/parse-cache.js -t [ babelify --presets [ @babel/preset-env ] ]",
+    "prepublish": "npm run lint && npm run build && npm run browselify"
   },
   "repository": {
     "type": "git",
