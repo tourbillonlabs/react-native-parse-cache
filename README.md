@@ -24,6 +24,9 @@ parseCache(Parse, 'MyUniqueAppNameOrKey', {
   host: 'localhost'
 });
 
+// for memory storage use:
+parseCache(Parse, 'MyUniqueAppNameOrKey', {engine: 'memory', count: 1000}); // {engine: 'memory', count: 1000} are default values and are optional
+
 const RecordObject = Parse.Object.extend('Record');
 const query = new Parse.Query(RecordObject); // or const query = new Parse.Query('Record');
 
