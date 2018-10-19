@@ -17,6 +17,7 @@
     "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",
     "babelify": "^10.0.0",
+    "derequire": "^2.0.6",
     "eslint": "^4.16.0",
     "eslint-plugin-mocha": "^4.11.0",
     "mocha": "^5.2.0",
@@ -28,7 +29,7 @@
     "test": "npm run build && mocha --exit",
     "lint": "eslint index.js src/*",
     "build": "babel src --out-dir out",
-    "browselify": "browserify index.js -s parseCache -o dist/parse-cache.js -t [ babelify --presets [ @babel/preset-env ] ]",
+    "browselify": "mkdir -p dist && browserify index.js -s parseCache -t [ babelify --presets [ @babel/preset-env ] ] | derequire > dist/parse-cache.js",
     "prepublish": "npm run lint && npm run build && npm run browselify"
   },
   "repository": {
