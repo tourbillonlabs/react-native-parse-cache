@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "cacheman": "^2.2.1",
+    "cacheman-memory": "^1.1.0",
     "cacheman-redis": "^1.1.2",
     "jsosort": "0.0.0",
     "sha1": "^1.1.1"
@@ -29,7 +30,7 @@
     "test": "npm run build && mocha --exit",
     "lint": "eslint index.js src/*",
     "build": "babel src --out-dir out",
-    "browselify": "mkdir -p dist && browserify index.js -s parseCache -t [ babelify --presets [ @babel/preset-env ] ] | derequire > dist/parse-cache.js",
+    "browselify": "mkdir -p dist && browserify index.js -r cacheman-memory -s parseCache -t [ babelify --presets [ @babel/preset-env ] ] | derequire > dist/parse-cache.js",
     "prepublish": "npm run lint && npm run build && npm run browselify"
   },
   "repository": {
