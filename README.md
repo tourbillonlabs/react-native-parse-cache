@@ -35,7 +35,24 @@ query
   .cache(30) // The number of seconds to cache the query.  Defaults to 60 seconds.
   .equalTo('someField', 'someValue')
   .find(); // you can use find, first, count, countDocuments, estimatedDocumentCount, aggregate, each, get or distinct
-  
+
+// on a cloud code with 10s ttl
+Parse.Cloud.define('test', function(request, response) {
+	const query = new Parse.Query('SomeClass');
+	query.cache(10).first().then(f => response.success({fromCache: !!f.fromCache})).catch(response.error)
+});
+
+// calling your cloud code
+curl -X POST -H "X-Parse-Application-Id: your_app_id"  -H "X-Parse-REST-API-Key: your_rest_api_key"  -H "Content-Type: application/json" -d "{}"  https://parseapi.back4app.com/functions/test
+
+// the result should be
+{"result":{"fromCache":false}}
+
+// then run the curl again and...
+{"result":{"fromCache":true}}
+
+// then run again after 10s and...
+{"result":{"fromCache":false}}
 ```
 
 You can also pass a custom key into the `.cache()` method, which you can then use later to clear the cached content.
