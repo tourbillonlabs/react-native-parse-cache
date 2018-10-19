@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.parseCache = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.parseCache = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(_dereq_,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -151,7 +151,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],2:[function(require,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -162,8 +162,8 @@ function fromByteArray (uint8) {
 
 'use strict'
 
-var base64 = require('base64-js')
-var ieee754 = require('ieee754')
+var base64 = _dereq_('base64-js')
+var ieee754 = _dereq_('ieee754')
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -1930,7 +1930,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":1,"ieee754":3}],3:[function(require,module,exports){
+},{"base64-js":1,"ieee754":3}],3:[function(_dereq_,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -2016,7 +2016,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],4:[function(require,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2202,12 +2202,12 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],5:[function(require,module,exports){
+},{}],5:[function(_dereq_,module,exports){
 'use strict';
 
-module.exports = require('./out');
+module.exports = _dereq_('./out');
 
-},{"./out":15}],6:[function(require,module,exports){
+},{"./out":15}],6:[function(_dereq_,module,exports){
 (function (process){
 'use strict';
 
@@ -2225,7 +2225,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _ms = require('ms');
+var _ms = _dereq_('ms');
 
 var _ms2 = _interopRequireDefault(_ms);
 
@@ -2393,7 +2393,7 @@ var Cacheman = function () {
         }
 
         try {
-          Engine = require(_engine);
+          Engine = _dereq_(_engine);
         } catch (e) {
           if (e.code === 'MODULE_NOT_FOUND') {
             throw new CachemanError('Missing required npm module ' + _engine);
@@ -2719,8 +2719,8 @@ exports.default = Cacheman;
 
 Cacheman.engines = engines;
 module.exports = exports['default'];
-}).call(this,require('_process'))
-},{"_process":4,"ms":10}],7:[function(require,module,exports){
+}).call(this,_dereq_('_process'))
+},{"_process":4,"ms":10}],7:[function(_dereq_,module,exports){
 var charenc = {
   // UTF-8 encoding
   utf8: {
@@ -2755,7 +2755,7 @@ var charenc = {
 
 module.exports = charenc;
 
-},{}],8:[function(require,module,exports){
+},{}],8:[function(_dereq_,module,exports){
 (function() {
   var base64map
       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
@@ -2853,7 +2853,7 @@ module.exports = charenc;
   module.exports = crypt;
 })();
 
-},{}],9:[function(require,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 'use strict';
 
 function jsosort(obj, sortfunction) {
@@ -2870,7 +2870,7 @@ function jsosort(obj, sortfunction) {
 
 module.exports = jsosort;
 
-},{}],10:[function(require,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 /**
  * Helpers.
  */
@@ -3021,12 +3021,12 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's'
 }
 
-},{}],11:[function(require,module,exports){
+},{}],11:[function(_dereq_,module,exports){
 (function (Buffer){
 (function() {
-  var crypt = require('crypt'),
-      utf8 = require('charenc').utf8,
-      bin = require('charenc').bin,
+  var crypt = _dereq_('crypt'),
+      utf8 = _dereq_('charenc').utf8,
+      bin = _dereq_('charenc').bin,
 
   // The core
   sha1 = function (message) {
@@ -3106,11 +3106,11 @@ function plural(ms, n, name) {
   module.exports = api;
 })();
 
-}).call(this,require("buffer").Buffer)
-},{"buffer":2,"charenc":7,"crypt":8}],12:[function(require,module,exports){
+}).call(this,_dereq_("buffer").Buffer)
+},{"buffer":2,"charenc":7,"crypt":8}],12:[function(_dereq_,module,exports){
 'use strict';
 
-var Cacheman = require('cacheman');
+var Cacheman = _dereq_('cacheman');
 
 function Cache(cacheName, options) {
   if (!cacheName) throw 'cacheName is required';
@@ -3144,10 +3144,10 @@ module.exports = function (cacheName, options) {
   return new Cache(cacheName, options);
 };
 
-},{"cacheman":6}],13:[function(require,module,exports){
+},{"cacheman":6}],13:[function(_dereq_,module,exports){
 'use strict';
 
-var generateKey = require('./generate-key');
+var generateKey = _dereq_('./generate-key');
 
 module.exports = function (Parse, cache) {
   var originalOperations = {
@@ -3236,12 +3236,12 @@ function inflateModel(constructor) {
   };
 }
 
-},{"./generate-key":14}],14:[function(require,module,exports){
+},{"./generate-key":14}],14:[function(_dereq_,module,exports){
 'use strict';
 
-var jsosort = require('jsosort');
+var jsosort = _dereq_('jsosort');
 
-var sha1 = require('sha1');
+var sha1 = _dereq_('sha1');
 
 module.exports = function init(obj) {
   obj = jsosort(obj);
@@ -3251,7 +3251,7 @@ module.exports = function init(obj) {
   return sha1(obj);
 };
 
-},{"jsosort":9,"sha1":11}],15:[function(require,module,exports){
+},{"jsosort":9,"sha1":11}],15:[function(_dereq_,module,exports){
 'use strict';
 
 var hasRun = false;
@@ -3261,9 +3261,9 @@ module.exports = function init(Parse, cacheName) {
   var cacheOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
   if (hasRun) return;
   hasRun = true;
-  init._cache = cache = require('./cache')(cacheName, cacheOptions);
+  init._cache = cache = _dereq_('./cache')(cacheName, cacheOptions);
 
-  require('./extend-query')(Parse, cache);
+  _dereq_('./extend-query')(Parse, cache);
 };
 
 module.exports.clearCache = function (customKey, cb) {
