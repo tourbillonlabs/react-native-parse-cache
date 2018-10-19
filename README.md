@@ -25,9 +25,9 @@ parseCache(Parse, 'MyUniqueAppNameOrKey', {
 });
 
 const RecordObject = Parse.Object.extend('Record');
-const Record = new Parse.Query(RecordObject);
+const query = new Parse.Query(RecordObject); // or const query = new Parse.Query('Record');
 
-Record
+query
   .cache(30) // The number of seconds to cache the query.  Defaults to 60 seconds.
   .equalTo('someField', 'someValue')
   .find(); // you can use find, first, count, countDocuments, estimatedDocumentCount, aggregate, each, get or distinct
@@ -37,7 +37,7 @@ Record
 You can also pass a custom key into the `.cache()` method, which you can then use later to clear the cached content.
 
 ```javascript
-Record
+query
   .cache(30, 'some_custom_cache_key') // The number of seconds to cache the query.  Defaults to 60 seconds.
   .equalTo('someField', 'someValue')
   .find();
@@ -51,19 +51,15 @@ Insert `.cache()` into the queries before `find, first, count, countDocuments, e
 If you want to clear the cache for a specific query, you must specify the cache key yourself:
 
 ```js
-function getChildrenByParentId(parentId, cb) {
-  Children
-    .cache(30, `${parentId}_children`)
-    .find({ parentId });
-}
+query
+  .cache(30, 'some_custom_cache_key')
+  .find();
 
-function clearChildrenByParentIdCache(parentId, cb) {
-  parseCache.clearCache(`${parentId}_children`, cb);
-}
+parseCache.clearCache('some_custom_cache_key').then(doSomething);
 
-// or using async
-async function clearChildrenByParentIdCache(parentId) {
-  await parseCache.clearCache(`${parentId}_children`);
+// or using async/await
+async function clearCache(key) {
+  await parseCache.clearCache(key);
 }
 ```
 
