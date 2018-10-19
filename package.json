@@ -28,7 +28,7 @@
     "test": "npm run build && mocha --exit",
     "lint": "eslint index.js src/*",
     "build": "babel src --out-dir out",
-    "browselify": "browserify index.js -o dist/parse-cache.js -t [ babelify --presets [ @babel/preset-env ] ]",
+    "browselify": "browserify index.js -s parseCache -o dist/parse-cache.js -t [ babelify --presets [ @babel/preset-env ] ]",
     "prepublish": "npm run lint && npm run build && npm run browselify"
   },
   "repository": {
