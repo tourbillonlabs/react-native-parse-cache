@@ -21,7 +21,8 @@ const parseCache = require('parse-cache');
 parseCache(Parse, 'MyUniqueAppNameOrKey', {
   engine: 'redis',    /* If you don't specify the redis engine,      */
   port: 6379,         /* the query results will be cached in memory (on browser use memory storage). */
-  host: 'localhost'
+  host: 'localhost',
+  password: 'optional password'
 });
 
 // for memory storage use:
