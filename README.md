@@ -12,21 +12,35 @@ A Parse caching module that works exactly how you would expect it to, with the l
 
 #### This module was tested using parse-server 2.8.4 and Parse SDK 2.1. There is no warranty using it on versions before these ones. ####
 
+## Install: ##
+
+You can use it on cloud code, so you need to put it in your `package.json` and deploy it on your server
+```js
+{
+  "dependencies": {
+    "parse-cache": "*"
+  }
+}
+```
+
 ## Usage ##
 
 ```javascript
 const Parse = require('parse/node'); // or require('parse') if you are on a Browser
 const parseCache = require('parse-cache');
 
+// choose your storage...
+
+// memory storage usage:
+parseCache(Parse, 'MyUniqueAppNameOrKey', {engine: 'memory', count: 1000}); // {engine: 'memory', count: 1000} are default values and are optional
+
+// redis storage usage:
 parseCache(Parse, 'MyUniqueAppNameOrKey', {
   engine: 'redis',    /* If you don't specify the redis engine,      */
   port: 6379,         /* the query results will be cached in memory (on browser use memory storage). */
   host: 'localhost',
   password: 'optional password'
 });
-
-// for memory storage use:
-parseCache(Parse, 'MyUniqueAppNameOrKey', {engine: 'memory', count: 1000}); // {engine: 'memory', count: 1000} are default values and are optional
 
 const RecordObject = Parse.Object.extend('Record');
 const query = new Parse.Query(RecordObject); // or const query = new Parse.Query('Record');
