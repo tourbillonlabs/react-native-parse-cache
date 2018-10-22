@@ -1,6 +1,8 @@
 'use strict';
 
-const Cacheman = require('cacheman');
+const isNode = typeof window === 'undefined';
+
+const Cacheman = isNode ? require('cacheman') : require('cacheman-memory');
 
 function Cache(cacheName, options) {
   if (!cacheName) throw 'cacheName is required';

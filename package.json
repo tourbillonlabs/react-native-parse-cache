@@ -17,21 +17,23 @@
     "@babel/cli": "^7.1.2",
     "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",
-    "babelify": "^10.0.0",
-    "derequire": "^2.0.6",
     "eslint": "^4.16.0",
     "eslint-plugin-mocha": "^4.11.0",
     "mocha": "^5.2.0",
     "parse": "^2.1.0",
     "should": "^13.2.1",
+    "webpack": "^4.22.0",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.9",
     "xmlhttprequest": "^1.8.0"
   },
   "scripts": {
-    "test": "npm run build && mocha --exit",
+    "start": "webpack-dev-server --watch --progress --open --mode development",
+    "test": "npm run build-node && mocha --exit",
     "lint": "eslint index.js src/*",
-    "build": "babel src --out-dir out",
-    "browselify": "mkdir -p dist && browserify index.js -r cacheman-memory -s parseCache -t [ babelify --presets [ @babel/preset-env ] ] | derequire > dist/parse-cache.js",
-    "prepublish": "npm run lint && npm run build && npm run browselify"
+    "build-node": "babel src --out-dir out",
+    "build-web": "webpack --config webpack.config.js --mode production",
+    "prepublish": "npm run lint && npm run build-node && npm run build-web"
   },
   "repository": {
     "type": "git",
