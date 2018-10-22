@@ -1,6 +1,6 @@
 {
   "name": "parse-cache",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Parse cache that actually works.",
   "main": "index.js",
   "directories": {
