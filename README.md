@@ -14,7 +14,7 @@ A Parse caching module that works exactly how you would expect it to, with the l
 
 ## Install: ##
 
-You can use it on cloud code, so you need to put it in your `package.json` and deploy it on your server
+You can use it on cloud code, so you need to put it in your `package.json` and deploy it on your server. So run `npm install --save parse-cache`.
 ```js
 {
   "dependencies": {
@@ -22,6 +22,13 @@ You can use it on cloud code, so you need to put it in your `package.json` and d
   }
 }
 ```
+
+You can also use it with Parse Javascript SDK on a single page app.
+```html
+  <script src="https://unpkg.com/parse@1.11.1/dist/parse.min.js"></script>
+  <script src="https://unpkg.com/parse-cache/dist/parse-cache.js"></script>
+```
+
 
 ## Usage ##
 
@@ -77,6 +84,32 @@ query
   .equalTo('someField', 'someValue')
   .find();
 
+```
+
+To use it on frontend with Parse Javascript SDK just call it using `parseCache`:
+
+```html
+  <script>
+    parseCache(Parse, 'MyUniqueAppNameOrKey', {engine: 'memory', count: 1000});
+  </script>
+  <script>
+    var query = new Parse.Query('TestClass');
+  
+    query.cache(60).find().then(function (results) {
+      console.log(1);
+      results.map(function (r) {
+        console.log(r.fromCache);
+      });
+      console.log(results);
+      query.cache(60).find().then(function (cachedResults) {
+        console.log(2);
+        cachedResults.map(function (r) {
+          console.log(r.fromCache);
+        });
+        console.log(cachedResults);
+      })
+    });
+  </script>
 ```
 
 Insert `.cache()` into the queries before `find, first, count, countDocuments, estimatedDocumentCount, aggregate, each, get or distinct` if you want to cache, and they will be cached.  Works with `select`, `ascending`, `descending`, and anything else that will modify the results of a query.
