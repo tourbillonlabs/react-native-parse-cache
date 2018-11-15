@@ -33,10 +33,8 @@ module.exports = function(Parse, cache) {
             if (isNotParseObjects) {
               return resolve(cachedResults);
             }
-            cachedResults = Array.isArray(cachedResults) ?
-              cachedResults.map(inflateModel({Parse, model})) :
-              inflateModel({Parse, model})(cachedResults);
-
+            const inflate = inflateModel({ Parse, model });
+            cachedResults = Array.isArray(cachedResults) ? cachedResults.map(inflate) : inflate(cachedResults);
 
             return resolve(cachedResults);
           }
@@ -84,7 +82,7 @@ module.exports = function(Parse, cache) {
   };
 };
 
-function inflateModel({Parse, model}) {
+function inflateModel({ Parse, model }) {
   return (data) => {
     data.__type = data.__type || 'Object';
     data.className = data.className || model;
