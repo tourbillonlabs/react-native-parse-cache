@@ -14,7 +14,12 @@ A Parse caching module that works exactly how you would expect it to, with the l
 
 ## Install: ##
 
-You can use it on cloud code, so you need to put it in your `package.json` and deploy it on your server. So run `npm install --save parse-cache`.
+You can use npm to install it.
+
+`npm install --save parse-cache`
+
+You can use it on cloud code, so you need to put it in your `package.json` and deploy it on your server.
+
 ```js
 {
   "dependencies": {
