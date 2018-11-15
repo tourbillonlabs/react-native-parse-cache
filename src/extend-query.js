@@ -87,7 +87,7 @@ module.exports = function(Parse, cache) {
 function inflateModel(constructor) {
   return (data) => {
     const obj = new constructor();
-    obj.set(data);
+    obj.fromJSON(data, true);
     obj.fromCache = true;
     return obj;
   };
