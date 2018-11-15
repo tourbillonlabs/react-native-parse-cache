@@ -34,8 +34,8 @@ module.exports = function(Parse, cache) {
               return resolve(cachedResults);
             }
             cachedResults = Array.isArray(cachedResults) ?
-              cachedResults.map(inflateModel(Parse.Object.extend(model))) :
-              inflateModel(Parse.Object.extend(model))(cachedResults);
+              cachedResults.map(inflateModel({Parse, model})) :
+              inflateModel({Parse, model})(cachedResults);
 
 
             return resolve(cachedResults);
@@ -84,10 +84,11 @@ module.exports = function(Parse, cache) {
   };
 };
 
-function inflateModel(constructor) {
+function inflateModel({Parse, model}) {
   return (data) => {
-    const obj = new constructor();
-    obj.fromJSON(data, true);
+    data.__type = data.__type || 'Object';
+    data.className = data.className || model;
+    const obj = Parse.Object.fromJSON(data);
     obj.fromCache = true;
     return obj;
   };

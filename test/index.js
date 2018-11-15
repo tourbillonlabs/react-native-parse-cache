@@ -19,12 +19,12 @@ require('should');
 // const Parse = require('parse');
 
 const Parse = require('parse/node');
-const parseCache = require('../out');
+const parseCache = require('../src');
 
 let RecordObject;
 
 describe('parse-cache', function() {
-  this.timeout(10000);
+  this.timeout(20000);
 
   before((done) => {
     // parseCache(Parse, 'MyAppName', { engine: 'redis' });
