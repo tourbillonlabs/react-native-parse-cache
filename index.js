@@ -1,3 +1,1 @@
-'use strict';
-
-module.exports = require('./out');
+module.exports = require('./lib/index');

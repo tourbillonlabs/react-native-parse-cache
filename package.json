@@ -1,44 +1,75 @@
 {
-  "name": "parse-cache",
-  "version": "0.0.13",
-  "description": "Parse cache that actually works.",
+  "name": "react-native-parse-cache",
+  "version": "0.0.2",
+  "private": true,
+  "description": "Parse cache that works with react-native.",
   "main": "index.js",
-  "directories": {
-    "test": "test"
+  "files": [
+    "lib/",
+    "index.js"
+  ],
+  "eslintConfig": {
+    "extends": "universe/native"
+  },
+  "jest": {
+    "preset": "react-native",
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ],
+    "setupFiles": [
+      "<rootDir>/__jest__/globals.js"
+    ],
+    "transform": {
+      "^.+\\.js$": "<rootDir>/node_modules/react-native/jest/preprocessor.js"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jest-)?react-native|parse)"
+    ],
+    "verbose": true
   },
   "dependencies": {
-    "cacheman": "^2.2.1",
-    "cacheman-memory": "^1.1.0",
-    "cacheman-redis": "^1.1.2",
     "jsosort": "0.0.0",
+    "react-native-cache-store": "^1.0.2",
     "sha1": "^1.1.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.1.2",
-    "@babel/core": "^7.1.2",
-    "@babel/preset-env": "^7.1.0",
-    "babel-loader": "^8.0.4",
-    "eslint": "^4.16.0",
-    "eslint-plugin-mocha": "^4.11.0",
-    "mocha": "^5.2.0",
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/runtime": "^7.5.5",
+    "@react-native-community/eslint-config": "^0.0.5",
+    "@types/jest": "^24.0.17",
+    "babel-eslint": "^10.0.2",
+    "babel-jest": "^24.8.0",
+    "es6-promise": "^4.2.8",
+    "eslint": "^6.1.0",
+    "eslint-config-universe": "^1.0.7",
+    "jest": "^24.8.0",
+    "metro-react-native-babel-preset": "^0.55.0",
+    "mock-socket": "^9.0.0",
     "parse": "^2.1.0",
-    "should": "^13.2.1",
-    "webpack": "^4.22.0",
-    "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "^3.1.9",
-    "xmlhttprequest": "^1.8.0"
+    "prettier": "^1.18.2",
+    "react": "16.8.6",
+    "react-native": "0.60.4",
+    "react-native-dotenv": "^0.2.0",
+    "react-test-renderer": "16.8.6",
+    "w3c-xmlhttprequest": "^2.1.3"
   },
   "scripts": {
-    "start": "webpack-dev-server --watch --progress --open --mode development",
-    "test": "npm run build-node && mocha --exit",
+    "test": "jest --watchAll",
     "lint": "eslint index.js src/*",
-    "build-node": "babel src --out-dir out",
-    "build-web": "webpack --config webpack.config.js --mode production",
-    "prepublish": "npm run lint && npm run build-node && npm run build-web"
+    "transpile": "babel src --out-dir lib",
+    "prepare": "npm run lint && npm run transpile"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/back4app/parse-cache.git"
+    "url": "https://github.com/tourbillonlabs/react-native-parse-cache.git"
   },
   "keywords": [
     "cache",
@@ -46,14 +77,15 @@
     "parse",
     "parse-server",
     "parseframework",
+    "react-native",
     "redis",
     "store",
     "ttl"
   ],
-  "author": "Ricardo Paiva <ricardo.paiva@back4app.com>",
+  "author": "Tourbillon Labs <hello@tourbillonlabs.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/back4app/parse-cache/issues"
+    "url": "https://github.com/tourbillonlabs/react-native-parse-cache/issues"
   },
-  "homepage": "https://www.back4app.com"
+  "homepage": "https://www.tourbillonlabs.com"
 }

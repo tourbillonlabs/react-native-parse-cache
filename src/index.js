@@ -1,24 +1,23 @@
-'use strict';
+import CacheStore from 'react-native-cache-store';
 
 let hasRun = false;
-let cache;
 
-module.exports = function init(Parse, cacheName, cacheOptions = {}) {
-  if (hasRun) return;
+module.exports = async function init(Parse) {
+  if (hasRun) {
+    return;
+  }
   hasRun = true;
 
-  init._cache = cache = require('./cache')(cacheName, cacheOptions);
-
-  require('./extend-query')(Parse, cache);
+  require('./extend-query')(Parse, CacheStore);
 };
 
-module.exports.clearCache = function(customKey, cb) {
+module.exports.clearCache = async function(customKey, cb) {
   if (!customKey) {
-    return cache.clear(cb);
+    await CacheStore.flush();
   }
-  return cache.del(customKey, cb);
+  await CacheStore.remove(customKey);
 };
 
-module.exports.close = function(cb) {
-  return cache.close(cb);
+module.exports.close = async function(cb) {
+  return await CacheStore.flush();
 };

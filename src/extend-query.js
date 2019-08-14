@@ -1,6 +1,4 @@
-'use strict';
-
-const generateKey = require('./generate-key');
+import generateKey from './generate-key';
 
 module.exports = function(Parse, cache) {
   const originalOperations = {
@@ -15,41 +13,53 @@ module.exports = function(Parse, cache) {
     distinct: Parse.Query.prototype.distinct,
   };
 
-  Object.keys(originalOperations).forEach((operation) => {
-    Parse.Query.prototype[operation] = function() {
-      if (!this.hasOwnProperty('_ttl')) return originalOperations[operation].apply(this, arguments);
+  Object.keys(originalOperations).forEach(operation => {
+    Parse.Query.prototype[operation] = function(...args) {
+      if (!this.hasOwnProperty('_ttl')) {
+        return originalOperations[operation].apply(this, args);
+      }
 
-      this.args = arguments;
+      this.args = args;
       this.operation = operation;
 
       const key = this._key || this.getCacheKey();
       const ttl = this._ttl;
-      const isNotParseObjects = ['distinct', 'count', 'countDocuments', 'estimatedDocumentCount'].includes(operation);
+      const isNotParseObjects = [
+        'distinct',
+        'count',
+        'countDocuments',
+        'estimatedDocumentCount',
+      ].includes(operation);
       const model = this.className;
 
-      return new Promise((resolve, reject) => {
-        cache.get(key, (err, cachedResults) => { //eslint-disable-line handle-callback-err
-          if (cachedResults != null) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          let cachedResults = await cache.get(key);
+          if (cachedResults !== null) {
             if (isNotParseObjects) {
               return resolve(cachedResults);
             }
-            const inflate = inflateModel({ Parse, model });
-            cachedResults = Array.isArray(cachedResults) ? cachedResults.map(inflate) : inflate(cachedResults);
+            const inflate = inflateModel({
+              Parse,
+              model,
+            });
+            cachedResults = Array.isArray(cachedResults)
+              ? cachedResults.map(inflate)
+              : inflate(cachedResults);
 
             return resolve(cachedResults);
           }
 
-          originalOperations[operation]
-            .apply(this, arguments)
-            .then((results) => {
-              cache.set(key, results, ttl, () => {
-                return resolve(results);
-              });
-            })
-            .catch((err) => {
-              reject(err);
-            });
-        });
+          let results = await originalOperations[operation].apply(this, args);
+          if (results || (operation.match(/count/i) && results === 0)) {
+            await cache.set(key, results, ttl);
+            return resolve(results);
+          } else {
+            return operation.match(/count/i) ? resolve(0) : resolve([]);
+          }
+        } catch (err) {
+          reject(err);
+        }
       });
     };
   });
@@ -75,7 +85,7 @@ module.exports = function(Parse, cache) {
       sort: this._order,
       select: this._select,
       extraOptions: this._extraOptions,
-      where: this._where
+      where: this._where,
     };
 
     return generateKey(key);
@@ -83,7 +93,7 @@ module.exports = function(Parse, cache) {
 };
 
 function inflateModel({ Parse, model }) {
-  return (data) => {
+  return data => {
     data.__type = data.__type || 'Object';
     data.className = data.className || model;
     const obj = Parse.Object.fromJSON(data);
